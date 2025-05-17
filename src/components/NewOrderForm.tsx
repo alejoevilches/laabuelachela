@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getActiveProducts, createOrder, type Product } from '../lib/supabase'
+import { getAllProducts, createOrder, type Product } from '../lib/supabase'
 
 interface SelectedProduct {
   product_id: number
@@ -21,8 +21,10 @@ export default function NewOrderForm({ onClose, onSuccess }: NewOrderFormProps) 
   useEffect(() => {
     async function loadProducts() {
       try {
-        const data = await getActiveProducts()
-        setProducts(data)
+        const data = await getAllProducts()
+        // Filtrar solo los productos activos para el formulario de pedido
+        const activeProducts = data.filter(product => product.active)
+        setProducts(activeProducts)
       } catch (err) {
         console.error('Error loading products:', err)
         setError('Error al cargar los productos')
