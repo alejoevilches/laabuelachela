@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import logo from '../assets/logo.jpg';
 import HomePage from './pages/HomePage'
 import ProductsPage from './pages/ProductsPage'
 import OrdersPage from './pages/OrdersPage'
@@ -8,7 +9,7 @@ export default function App() {
     <Router>
       <div className="min-h-screen bg-white">
         <nav className="w-full flex justify-center px-4 sm:px-6 py-4">
-          <img src="/src/assets/logo.jpg" alt="La Abuela Chela logo" className="max-w-xs w-full h-32 object-contain" />
+          <img src={logo} alt="La Abuela Chela logo" className="max-w-xs w-full h-32 object-contain" />
         </nav>
         <Routes>
           <Route path="/" element={<HomePage />} />
