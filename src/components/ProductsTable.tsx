@@ -43,17 +43,17 @@ export default function ProductsTable() {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
+    <div className="w-full">
+      <table className="w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Producto
             </th>
-            <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Estado
             </th>
-            <th scope="col" className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Acciones
             </th>
           </tr>
@@ -61,20 +61,20 @@ export default function ProductsTable() {
         <tbody className="bg-white divide-y divide-gray-200">
           {products.map((product) => (
             <tr key={product.id} className="hover:bg-gray-50">
-              <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-2 sm:px-4 py-2 text-sm text-gray-900 max-w-[150px] sm:max-w-none truncate">
                 {product.description}
               </td>
-              <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+              <td className="px-2 sm:px-4 py-2 text-sm text-gray-500">
+                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                   product.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
                   {product.active ? 'Activo' : 'Inactivo'}
                 </span>
               </td>
-              <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-2 sm:px-4 py-2 text-sm text-gray-500">
                 <button
                   onClick={() => handleToggleStatus(product.id, product.active)}
-                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                  className={`px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-medium ${
                     product.active
                       ? 'bg-red-100 text-red-800 hover:bg-red-200'
                       : 'bg-green-100 text-green-800 hover:bg-green-200'
