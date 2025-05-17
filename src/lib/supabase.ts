@@ -108,12 +108,11 @@ export async function createProduct(description: string) {
   return { data, error: null }
 }
 
-export async function getActiveProducts() {
-  console.log('Fetching active products from Supabase...')
+export async function getAllProducts() {
+  console.log('Fetching all products from Supabase...')
   const { data, error } = await supabase
     .from('products')
     .select('*')
-    .eq('active', true)
     .order('description')
 
   if (error) {

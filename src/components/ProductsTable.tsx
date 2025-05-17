@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getActiveProducts, toggleProductStatus, type Product } from '../lib/supabase'
+import { getAllProducts, toggleProductStatus, type Product } from '../lib/supabase'
 
 export default function ProductsTable() {
   const [products, setProducts] = useState<Product[]>([])
@@ -9,7 +9,7 @@ export default function ProductsTable() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await getActiveProducts()
+        const data = await getAllProducts()
         console.log('Data received in component:', JSON.stringify(data, null, 2))
         setProducts(data)
       } catch (err) {
@@ -26,7 +26,7 @@ export default function ProductsTable() {
   const handleToggleStatus = async (id: number, currentStatus: boolean) => {
     try {
       await toggleProductStatus(id, currentStatus)
-      const updatedProducts = await getActiveProducts()
+      const updatedProducts = await getAllProducts()
       setProducts(updatedProducts)
     } catch (err) {
       console.error('Error toggling status:', err)
