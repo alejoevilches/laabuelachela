@@ -26,11 +26,13 @@ try {
 // Crear el cliente de Supabase
 export const supabase = createClient(formattedUrl, supabaseKey)
 
+export type OrderStatus = 'pending' | 'completed'
+
 export interface Order {
   id: number
   client: string
   amount: number
-  status: 'pending' | 'completed' | 'cancelled'
+  status: OrderStatus
   date: string // fecha (YYYY-MM-DD)
   time: string // hora (HH:mm:ss)
 }
@@ -84,7 +86,8 @@ export async function createOrder(
         client: customerName,
         date: date,
         time: time,
-        amount: amount
+        amount: amount,
+        status: 'pending'
       }
     ])
     .select()
@@ -226,13 +229,20 @@ export async function checkAndSetupProductsTable() {
   }
 }
 
-export async function getOrdersWithProducts() {
+export async function getOrdersWithProducts(status?: OrderStatus) {
   try {
     // Obtener todos los pedidos
-    const { data: orders, error: ordersError } = await supabase
+    let query = supabase
       .from('orders')
       .select('*')
       .order('date', { ascending: false })
+
+    // Aplicar filtro de status si se proporciona
+    if (status) {
+      query = query.eq('status', status)
+    }
+
+    const { data: orders, error: ordersError } = await query
 
     if (ordersError) throw ordersError
 
@@ -336,6 +346,20 @@ export async function updateOrder(
   if (productsError) {
     console.error('Error inserting updated order products:', productsError)
     throw productsError
+  }
+
+  return { error: null }
+}
+
+export async function updateOrderStatus(orderId: number, newStatus: OrderStatus) {
+  const { error } = await supabase
+    .from('orders')
+    .update({ status: newStatus })
+    .eq('id', orderId)
+
+  if (error) {
+    console.error('Error updating order status:', error)
+    throw error
   }
 
   return { error: null }

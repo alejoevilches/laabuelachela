@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getOrdersWithProducts, type OrderWithProducts } from '../lib/supabase'
+import { getOrdersWithProducts, updateOrderStatus, type OrderWithProducts } from '../lib/supabase'
 import { Modal } from './Modal'
 import NewOrderForm from './NewOrderForm'
 
@@ -9,11 +9,12 @@ export default function OrdersList() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingOrder, setEditingOrder] = useState<OrderWithProducts | null>(null)
+  const [showCompleted, setShowCompleted] = useState(false)
 
   useEffect(() => {
     async function loadOrders() {
       try {
-        const data = await getOrdersWithProducts()
+        const data = await getOrdersWithProducts(showCompleted ? 'completed' : 'pending')
         setOrders(data)
       } catch (err) {
         console.error('Error loading orders:', err)
@@ -24,16 +25,38 @@ export default function OrdersList() {
     }
 
     loadOrders()
-  }, [])
+  }, [showCompleted])
 
   const handleEditSuccess = async () => {
     setEditingOrder(null)
     try {
-      const data = await getOrdersWithProducts()
+      const data = await getOrdersWithProducts(showCompleted ? 'completed' : 'pending')
       setOrders(data)
     } catch (err) {
       console.error('Error reloading orders:', err)
       setError('Error al recargar los pedidos')
+    }
+  }
+
+  const handleCompleteOrder = async (orderId: number) => {
+    try {
+      await updateOrderStatus(orderId, 'completed')
+      const data = await getOrdersWithProducts(showCompleted ? 'completed' : 'pending')
+      setOrders(data)
+    } catch (err) {
+      console.error('Error completing order:', err)
+      setError('Error al completar el pedido')
+    }
+  }
+
+  const handleMarkAsPending = async (orderId: number) => {
+    try {
+      await updateOrderStatus(orderId, 'pending')
+      const data = await getOrdersWithProducts(showCompleted ? 'completed' : 'pending')
+      setOrders(data)
+    } catch (err) {
+      console.error('Error marking order as pending:', err)
+      setError('Error al marcar el pedido como pendiente')
     }
   }
 
@@ -57,9 +80,15 @@ export default function OrdersList() {
     return (
       <>
         <div className="text-center text-gray-600 py-8">
-          No hay pedidos para mostrar
+          No hay pedidos {showCompleted ? 'completados' : 'pendientes'} para mostrar
         </div>
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center gap-4 mt-8">
+          <button
+            onClick={() => setShowCompleted(!showCompleted)}
+            className="px-6 py-3 bg-blue-400 text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-blue-500 transition-all duration-300 transform hover:-translate-y-1"
+          >
+            {showCompleted ? 'Ver pedidos pendientes' : 'Ver pedidos completados'}
+          </button>
           <Link
             to="/"
             className="px-6 py-3 bg-green-400 text-gray-800 font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-green-500 transition-all duration-300 transform hover:-translate-y-1 text-center"
@@ -73,6 +102,15 @@ export default function OrdersList() {
 
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => setShowCompleted(!showCompleted)}
+          className="px-6 py-3 bg-blue-400 text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-blue-500 transition-all duration-300 transform hover:-translate-y-1"
+        >
+          {showCompleted ? 'Ver pedidos pendientes' : 'Ver pedidos completados'}
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {orders.map((order) => (
           <div
@@ -111,22 +149,33 @@ export default function OrdersList() {
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   order.status === 'pending'
                     ? 'bg-yellow-100 text-yellow-800'
-                    : order.status === 'completed'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
+                    : 'bg-green-100 text-green-800'
                 }`}>
-                  {order.status === 'pending'
-                    ? 'Pendiente'
-                    : order.status === 'completed'
-                    ? 'Completado'
-                    : 'Cancelado'}
+                  {order.status === 'pending' ? 'Pendiente' : 'Completado'}
                 </span>
-                <button
-                  onClick={() => setEditingOrder(order)}
-                  className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  Editar
-                </button>
+                <div className="flex gap-2">
+                  {order.status === 'pending' ? (
+                    <button
+                      onClick={() => handleCompleteOrder(order.id)}
+                      className="px-3 py-1 text-sm text-green-600 hover:text-green-800 font-medium"
+                    >
+                      Completar
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleMarkAsPending(order.id)}
+                      className="px-3 py-1 text-sm text-yellow-600 hover:text-yellow-800 font-medium"
+                    >
+                      Marcar como pendiente
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setEditingOrder(order)}
+                    className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Editar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
