@@ -159,31 +159,33 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
 
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-2">Productos</h3>
-        <div className="space-y-2">
-          {products.map((product) => (
-            <div key={product.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-              <span className="text-gray-700">{product.description}</span>
-              <div className="flex items-center space-x-2">
-                <button
-                  type="button"
-                  className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                  onClick={() => handleProductSelect(product.id, Math.max(0, (selectedProducts.find(p => p.product_id === product.id)?.quantity || 0) - 1))}
-                >
-                  -
-                </button>
-                <span className="w-8 text-center">
-                  {selectedProducts.find(p => p.product_id === product.id)?.quantity || 0}
-                </span>
-                <button
-                  type="button"
-                  className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                  onClick={() => handleProductSelect(product.id, (selectedProducts.find(p => p.product_id === product.id)?.quantity || 0) + 1)}
-                >
-                  +
-                </button>
+        <div className="max-h-[300px] overflow-y-auto border rounded-md">
+          <div className="space-y-2 p-2">
+            {products.map((product) => (
+              <div key={product.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span className="text-gray-700">{product.description}</span>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                    onClick={() => handleProductSelect(product.id, Math.max(0, (selectedProducts.find(p => p.product_id === product.id)?.quantity || 0) - 1))}
+                  >
+                    -
+                  </button>
+                  <span className="w-8 text-center">
+                    {selectedProducts.find(p => p.product_id === product.id)?.quantity || 0}
+                  </span>
+                  <button
+                    type="button"
+                    className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                    onClick={() => handleProductSelect(product.id, (selectedProducts.find(p => p.product_id === product.id)?.quantity || 0) + 1)}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
@@ -208,7 +210,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
         </div>
       </div>
 
-      <div className="flex justify-end space-x-3">
+      <div className="flex justify-end space-x-3 pt-4 border-t">
         <button
           type="button"
           onClick={onClose}
