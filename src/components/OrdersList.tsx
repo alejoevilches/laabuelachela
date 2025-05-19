@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getOrdersWithProducts, type OrderWithProducts } from '../lib/supabase'
+import { Modal } from './Modal'
+import NewOrderForm from './NewOrderForm'
 
 export default function OrdersList() {
   const [orders, setOrders] = useState<OrderWithProducts[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editingOrder, setEditingOrder] = useState<OrderWithProducts | null>(null)
 
   useEffect(() => {
     async function loadOrders() {
@@ -22,6 +25,17 @@ export default function OrdersList() {
 
     loadOrders()
   }, [])
+
+  const handleEditSuccess = async () => {
+    setEditingOrder(null)
+    try {
+      const data = await getOrdersWithProducts()
+      setOrders(data)
+    } catch (err) {
+      console.error('Error reloading orders:', err)
+      setError('Error al recargar los pedidos')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -93,7 +107,7 @@ export default function OrdersList() {
                   ${order.amount}
                 </span>
               </div>
-              <div className="mt-2">
+              <div className="mt-2 flex justify-between items-center">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                   order.status === 'pending'
                     ? 'bg-yellow-100 text-yellow-800'
@@ -107,6 +121,12 @@ export default function OrdersList() {
                     ? 'Completado'
                     : 'Cancelado'}
                 </span>
+                <button
+                  onClick={() => setEditingOrder(order)}
+                  className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Editar
+                </button>
               </div>
             </div>
           </div>
@@ -120,6 +140,28 @@ export default function OrdersList() {
           Volver al inicio
         </Link>
       </div>
+
+      <Modal 
+        isOpen={editingOrder !== null} 
+        onClose={() => setEditingOrder(null)}
+        title="Editar Pedido"
+      >
+        {editingOrder && (
+          <NewOrderForm 
+            onClose={() => setEditingOrder(null)} 
+            onSuccess={handleEditSuccess}
+            orderToEdit={{
+              id: editingOrder.id,
+              client: editingOrder.client,
+              amount: editingOrder.amount,
+              products: editingOrder.products.map(p => ({
+                product_id: p.product_id,
+                quantity: p.quantity
+              }))
+            }}
+          />
+        )}
+      </Modal>
     </>
   )
 } 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getAllProducts, createOrder, type Product } from '../lib/supabase'
+import { getAllProducts, createOrder, updateOrder, type Product } from '../lib/supabase'
 
 interface SelectedProduct {
   product_id: number
@@ -9,12 +9,19 @@ interface SelectedProduct {
 interface NewOrderFormProps {
   onClose: () => void
   onSuccess: () => void
+  orderToEdit?: {
+    id: number
+    client: string
+    amount: number
+    products: { product_id: number; quantity: number }[]
+  }
 }
 
-export default function NewOrderForm({ onClose, onSuccess }: NewOrderFormProps) {
+export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrderFormProps) {
   const [products, setProducts] = useState<Product[]>([])
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([])
   const [client, setClient] = useState('')
+  const [amount, setAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,6 +40,14 @@ export default function NewOrderForm({ onClose, onSuccess }: NewOrderFormProps) 
 
     loadProducts()
   }, [])
+
+  useEffect(() => {
+    if (orderToEdit) {
+      setClient(orderToEdit.client)
+      setAmount(orderToEdit.amount.toString())
+      setSelectedProducts(orderToEdit.products)
+    }
+  }, [orderToEdit])
 
   const handleProductSelect = (productId: number, quantity: number) => {
     setSelectedProducts(prev => {
@@ -56,25 +71,63 @@ export default function NewOrderForm({ onClose, onSuccess }: NewOrderFormProps) 
       return
     }
 
+    if (!client.trim()) {
+      setError('Debes ingresar el nombre del cliente')
+      return
+    }
+
+    if (!amount.trim() || isNaN(Number(amount)) || Number(amount) <= 0) {
+      setError('Debes ingresar un precio válido')
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await createOrder(
-        client,
-        '123456789', // Número de teléfono por defecto
-        selectedProducts.map(p => ({
-          productId: p.product_id,
-          quantity: p.quantity
-        }))
-      )
+      if (orderToEdit) {
+        // Actualizar pedido existente
+        const { error } = await updateOrder(
+          orderToEdit.id,
+          client,
+          '123456789', // Número de teléfono por defecto
+          Number(amount),
+          selectedProducts.map(p => ({
+            productId: p.product_id,
+            quantity: p.quantity
+          }))
+        )
 
-      if (error) throw error
+        if (error) {
+          console.error('Error from updateOrder:', error)
+          throw error
+        }
+      } else {
+        // Crear nuevo pedido
+        const { error } = await createOrder(
+          client,
+          '123456789', // Número de teléfono por defecto
+          Number(amount),
+          selectedProducts.map(p => ({
+            productId: p.product_id,
+            quantity: p.quantity
+          }))
+        )
+
+        if (error) {
+          console.error('Error from createOrder:', error)
+          throw error
+        }
+      }
 
       onSuccess()
     } catch (err) {
-      console.error('Error creating order:', err)
-      setError('Error al crear el pedido')
+      console.error('Error creating/updating order:', err)
+      if (err instanceof Error) {
+        setError(`Error al ${orderToEdit ? 'actualizar' : 'crear'} el pedido: ${err.message}`)
+      } else {
+        setError(`Error al ${orderToEdit ? 'actualizar' : 'crear'} el pedido. Por favor, intenta de nuevo.`)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -134,6 +187,27 @@ export default function NewOrderForm({ onClose, onSuccess }: NewOrderFormProps) 
         </div>
       </div>
 
+      <div>
+        <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+          Precio Total
+        </label>
+        <div className="mt-1 relative rounded-md shadow-sm">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-gray-500 sm:text-sm">$</span>
+          </div>
+          <input
+            type="number"
+            id="amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+            min="0"
+            step="0.01"
+            required
+          />
+        </div>
+      </div>
+
       <div className="flex justify-end space-x-3">
         <button
           type="button"
@@ -147,7 +221,7 @@ export default function NewOrderForm({ onClose, onSuccess }: NewOrderFormProps) 
           disabled={isLoading}
           className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
         >
-          {isLoading ? 'Creando...' : 'Crear Pedido'}
+          {isLoading ? (orderToEdit ? 'Actualizando...' : 'Creando...') : (orderToEdit ? 'Actualizar Pedido' : 'Crear Pedido')}
         </button>
       </div>
     </form>

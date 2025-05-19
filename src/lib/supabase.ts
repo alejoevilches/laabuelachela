@@ -61,39 +61,67 @@ export interface OrderWithProducts extends Order {
 export async function createOrder(
   customerName: string,
   customerPhone: string,
+  amount: number,
   products: { productId: number; quantity: number }[]
 ) {
+  console.log('Creating order with data:', {
+    customerName,
+    customerPhone,
+    amount,
+    products
+  })
+
+  // Obtener la fecha y hora actual
+  const now = new Date()
+  const date = now.toISOString().split('T')[0] // YYYY-MM-DD
+  const time = now.toTimeString().split(' ')[0] // HH:mm:ss
+
+  // Crear la orden básica
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .insert([
       {
-        customer_name: customerName,
-        customer_phone: customerPhone,
-        status: 'pending'
+        client: customerName,
+        date: date,
+        time: time,
+        amount: amount
       }
     ])
     .select()
     .single()
 
-  if (orderError) throw orderError
+  if (orderError) {
+    console.error('Error creating order:', orderError)
+    throw orderError
+  }
 
+  console.log('Order created successfully:', order)
+
+  // Insertar los productos en la tabla product_orders
   const orderProducts = products.map(p => ({
     order_id: order.id,
-    product_id: p.productId,
+    product: p.productId,
     quantity: p.quantity
   }))
 
+  console.log('Inserting order products:', orderProducts)
+
   const { error: productsError } = await supabase
-    .from('order_products')
+    .from('product_orders')
     .insert(orderProducts)
 
-  if (productsError) throw productsError
+  if (productsError) {
+    console.error('Error inserting order products:', productsError)
+    throw productsError
+  }
 
+  console.log('Order products inserted successfully')
   return { data: order, error: null }
 }
 
 export async function createProduct(description: string) {
-  const { data, error } = await supabase
+  // Crear el producto normal
+  const { data: normalProduct, error: normalError } = await supabase
     .from('products')
     .insert([
       {
@@ -104,8 +132,29 @@ export async function createProduct(description: string) {
     .select()
     .single()
 
-  if (error) throw error
-  return { data, error: null }
+  if (normalError) {
+    console.error('Error creating normal product:', normalError)
+    return { data: null, error: normalError }
+  }
+
+  // Crear la versión integral
+  const { data: integralProduct, error: integralError } = await supabase
+    .from('products')
+    .insert([
+      {
+        description: `[INTEGRAL] ${description}`,
+        active: true
+      }
+    ])
+    .select()
+    .single()
+
+  if (integralError) {
+    console.error('Error creating integral product:', integralError)
+    return { data: normalProduct, error: integralError }
+  }
+
+  return { data: normalProduct, error: null }
 }
 
 export async function getAllProducts() {
@@ -113,6 +162,7 @@ export async function getAllProducts() {
   const { data, error } = await supabase
     .from('products')
     .select('*')
+    .order('active', { ascending: false })
     .order('description')
 
   if (error) {
@@ -228,4 +278,65 @@ export async function getOrdersWithProducts() {
     console.error('Error fetching orders with products:', error)
     throw error
   }
+}
+
+export async function updateOrder(
+  orderId: number,
+  customerName: string,
+  customerPhone: string,
+  amount: number,
+  products: { productId: number; quantity: number }[]
+) {
+  console.log('Updating order with data:', {
+    orderId,
+    customerName,
+    customerPhone,
+    amount,
+    products
+  })
+
+  // Actualizar la orden básica
+  const { error: orderError } = await supabase
+    .from('orders')
+    .update({
+      client: customerName,
+      amount: amount
+    })
+    .eq('id', orderId)
+
+  if (orderError) {
+    console.error('Error updating order:', orderError)
+    throw orderError
+  }
+
+  // Eliminar los productos actuales del pedido
+  const { error: deleteError } = await supabase
+    .from('product_orders')
+    .delete()
+    .eq('order_id', orderId)
+
+  if (deleteError) {
+    console.error('Error deleting existing order products:', deleteError)
+    throw deleteError
+  }
+
+  // Insertar los nuevos productos
+  const orderProducts = products.map(p => ({
+    order_id: orderId,
+    product: p.productId,
+    quantity: p.quantity
+  }))
+
+  console.log('Inserting updated order products:', orderProducts)
+
+  const { error: productsError } = await supabase
+    .from('product_orders')
+    .insert(orderProducts)
+
+  if (productsError) {
+    console.error('Error inserting updated order products:', productsError)
+    throw productsError
+  }
+
+  return { error: null }
 } 
