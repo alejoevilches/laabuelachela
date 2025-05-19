@@ -138,7 +138,7 @@ export async function createProduct(description: string) {
   }
 
   // Crear la versión integral
-  const { data: integralProduct, error: integralError } = await supabase
+  const { error: integralError } = await supabase
     .from('products')
     .insert([
       {
