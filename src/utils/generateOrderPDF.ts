@@ -24,8 +24,7 @@ export function generateOrderPDF(orders: OrderWithProducts[]) {
     const headerHeight = 20 // Altura para número de pedido y cliente
     const addressHeight = 10 // Altura para dirección
     const productHeight = order.products.length * lineHeight // Altura para productos
-    const totalHeight = 10 // Altura para total
-    const cardHeight = headerHeight + addressHeight + productHeight + totalHeight + 10 // 10 de padding
+    const cardHeight = headerHeight + addressHeight + productHeight + 10 // 10 de padding
 
     // Verificar si necesitamos una nueva página
     if (currentY + cardHeight > doc.internal.pageSize.height - margin) {
@@ -49,7 +48,7 @@ export function generateOrderPDF(orders: OrderWithProducts[]) {
     doc.text(`Cliente: ${order.client}`, cardX + 5, currentY + 18)
 
     // Dirección
-    doc.text(`Dir: ${order.address}`, cardX + 5, currentY + 28)
+    doc.text(`Dirección: ${order.address}`, cardX + 5, currentY + 28)
 
     // Productos con viñetas
     let productY = currentY + 38
@@ -57,10 +56,6 @@ export function generateOrderPDF(orders: OrderWithProducts[]) {
       doc.text(`• ${product.description} x${product.quantity}`, cardX + 5, productY)
       productY += lineHeight
     })
-
-    // Total
-    doc.setFont('helvetica', 'bold')
-    doc.text(`Total: $${order.amount}`, cardX + 5, currentY + cardHeight - 5)
 
     // Actualizar posición para la siguiente card
     if (currentColumn === 'left') {

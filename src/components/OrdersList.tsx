@@ -206,7 +206,7 @@ export default function OrdersList() {
           </div>
         ))}
       </div>
-      <div className="flex justify-center gap-4 mt-8 mb-8">
+      <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8 mb-8">
         <button
           onClick={handlePrintOrders}
           className="px-6 py-3 bg-gray-400 text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-gray-500 transition-all duration-300 transform hover:-translate-y-1"
