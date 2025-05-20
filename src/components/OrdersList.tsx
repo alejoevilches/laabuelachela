@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { getOrdersWithProducts, updateOrderStatus, getWeeklyOrderSummary, type OrderWithProducts, type WeeklyOrderSummary } from '../lib/supabase'
 import { Modal } from './Modal'
 import NewOrderForm from './NewOrderForm'
+import { generateOrderPDF } from '../utils/generateOrderPDF'
 
 export default function OrdersList() {
   const [orders, setOrders] = useState<OrderWithProducts[]>([])
@@ -71,6 +72,10 @@ export default function OrdersList() {
       console.error('Error marking order as pending:', err)
       setError('Error al marcar el pedido como pendiente')
     }
+  }
+
+  const handlePrintOrders = () => {
+    generateOrderPDF(orders)
   }
 
   if (isLoading) {
@@ -202,6 +207,12 @@ export default function OrdersList() {
         ))}
       </div>
       <div className="flex justify-center gap-4 mt-8 mb-8">
+        <button
+          onClick={handlePrintOrders}
+          className="px-6 py-3 bg-gray-400 text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-gray-500 transition-all duration-300 transform hover:-translate-y-1"
+        >
+          Imprimir comanda
+        </button>
         <button
           onClick={() => setShowCompleted(!showCompleted)}
           className="px-6 py-3 bg-blue-400 text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-blue-500 transition-all duration-300 transform hover:-translate-y-1"

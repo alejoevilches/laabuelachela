@@ -26,6 +26,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
   const [amount, setAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isPickup, setIsPickup] = useState(false)
 
   useEffect(() => {
     async function loadProducts() {
@@ -49,6 +50,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
       setAddress(orderToEdit.address || '')
       setAmount(orderToEdit.amount.toString())
       setSelectedProducts(orderToEdit.products)
+      setIsPickup(orderToEdit.address === 'Retira')
     }
   }, [orderToEdit])
 
@@ -77,8 +79,8 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
       return
     }
 
-    // Validar dirección
-    if (!address.trim()) {
+    // Validar dirección solo si no es retira
+    if (!isPickup && !address.trim()) {
       setError('Por favor, ingresa la dirección de entrega')
       return
     }
@@ -117,7 +119,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
           orderToEdit.id,
           client,
           '123456789', // Número de teléfono por defecto
-          address,
+          isPickup ? 'Retira' : address,
           amountNumber,
           selectedProducts.map(p => ({
             productId: p.product_id,
@@ -134,7 +136,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
         const { error } = await createOrder(
           client,
           '123456789', // Número de teléfono por defecto
-          address,
+          isPickup ? 'Retira' : address,
           amountNumber,
           selectedProducts.map(p => ({
             productId: p.product_id,
@@ -187,17 +189,37 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
       </div>
 
       <div>
-        <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-          Dirección de entrega *
-        </label>
+        <div className="flex items-center justify-between">
+          <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+            Dirección de entrega *
+          </label>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isPickup"
+              checked={isPickup}
+              onChange={(e) => {
+                setIsPickup(e.target.checked)
+                if (e.target.checked) {
+                  setAddress('')
+                }
+              }}
+              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+            />
+            <label htmlFor="isPickup" className="ml-2 block text-sm text-gray-700">
+              Retira
+            </label>
+          </div>
+        </div>
         <input
           type="text"
           id="address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-          required
-          placeholder="Ingresa la dirección de entrega"
+          required={!isPickup}
+          disabled={isPickup}
+          placeholder={isPickup ? "Retira" : "Ingresa la dirección de entrega"}
         />
       </div>
 
