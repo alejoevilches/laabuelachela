@@ -71,6 +71,8 @@ export function generateOrderPDF(orders: OrderWithProducts[]) {
     }
   })
 
-  // Guardar el PDF
-  doc.save('comandas.pdf')
+  // Generar el PDF como blob y abrirlo en una nueva pestaña
+  const pdfBlob = doc.output('blob')
+  const pdfUrl = URL.createObjectURL(pdfBlob)
+  window.open(pdfUrl, '_blank')
 } 
