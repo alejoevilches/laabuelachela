@@ -228,6 +228,7 @@ export default function OrdersList() {
             orderToEdit={{
               id: editingOrder.id,
               client: editingOrder.client,
+              address: editingOrder.address,
               amount: editingOrder.amount,
               products: editingOrder.products.map(p => ({
                 product_id: p.product_id,
