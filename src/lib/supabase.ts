@@ -31,6 +31,7 @@ export type OrderStatus = 'pending' | 'completed'
 export interface Order {
   id: number
   client: string
+  address: string
   amount: number
   status: OrderStatus
   date: string // fecha (YYYY-MM-DD)
@@ -69,12 +70,14 @@ export interface WeeklyOrderSummary {
 export async function createOrder(
   customerName: string,
   customerPhone: string,
+  address: string,
   amount: number,
   products: { productId: number; quantity: number }[]
 ) {
   console.log('Creating order with data:', {
     customerName,
     customerPhone,
+    address,
     amount,
     products
   })
@@ -90,6 +93,7 @@ export async function createOrder(
     .insert([
       {
         client: customerName,
+        address: address,
         date: date,
         time: time,
         amount: amount,
@@ -343,6 +347,7 @@ export async function updateOrder(
   orderId: number,
   customerName: string,
   customerPhone: string,
+  address: string,
   amount: number,
   products: { productId: number; quantity: number }[]
 ) {
@@ -350,6 +355,7 @@ export async function updateOrder(
     orderId,
     customerName,
     customerPhone,
+    address,
     amount,
     products
   })
@@ -359,6 +365,7 @@ export async function updateOrder(
     .from('orders')
     .update({
       client: customerName,
+      address: address,
       amount: amount
     })
     .eq('id', orderId)

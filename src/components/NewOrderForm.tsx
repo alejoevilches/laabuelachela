@@ -12,6 +12,7 @@ interface NewOrderFormProps {
   orderToEdit?: {
     id: number
     client: string
+    address: string
     amount: number
     products: { product_id: number; quantity: number }[]
   }
@@ -21,6 +22,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
   const [products, setProducts] = useState<Product[]>([])
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([])
   const [client, setClient] = useState('')
+  const [address, setAddress] = useState('')
   const [amount, setAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,6 +46,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
   useEffect(() => {
     if (orderToEdit) {
       setClient(orderToEdit.client)
+      setAddress(orderToEdit.address || '')
       setAmount(orderToEdit.amount.toString())
       setSelectedProducts(orderToEdit.products)
     }
@@ -71,6 +74,12 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
     // Validar nombre del cliente
     if (!client.trim()) {
       setError('Por favor, ingresa el nombre del cliente')
+      return
+    }
+
+    // Validar dirección
+    if (!address.trim()) {
+      setError('Por favor, ingresa la dirección de entrega')
       return
     }
 
@@ -108,6 +117,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
           orderToEdit.id,
           client,
           '123456789', // Número de teléfono por defecto
+          address,
           amountNumber,
           selectedProducts.map(p => ({
             productId: p.product_id,
@@ -124,6 +134,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
         const { error } = await createOrder(
           client,
           '123456789', // Número de teléfono por defecto
+          address,
           amountNumber,
           selectedProducts.map(p => ({
             productId: p.product_id,
@@ -172,6 +183,21 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
           required
           placeholder="Ingresa el nombre del cliente"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+          Dirección de entrega *
+        </label>
+        <input
+          type="text"
+          id="address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+          required
+          placeholder="Ingresa la dirección de entrega"
         />
       </div>
 
