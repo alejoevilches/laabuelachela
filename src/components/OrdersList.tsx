@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getOrdersWithProducts, updateOrderStatus, type OrderWithProducts } from '../lib/supabase'
+import { getOrdersWithProducts, updateOrderStatus, getWeeklyOrderSummary, type OrderWithProducts, type WeeklyOrderSummary } from '../lib/supabase'
 import { Modal } from './Modal'
 import NewOrderForm from './NewOrderForm'
 
@@ -10,21 +10,26 @@ export default function OrdersList() {
   const [error, setError] = useState<string | null>(null)
   const [editingOrder, setEditingOrder] = useState<OrderWithProducts | null>(null)
   const [showCompleted, setShowCompleted] = useState(false)
+  const [weeklySummary, setWeeklySummary] = useState<WeeklyOrderSummary[]>([])
 
   useEffect(() => {
-    async function loadOrders() {
+    async function loadData() {
       try {
-        const data = await getOrdersWithProducts(showCompleted ? 'completed' : 'pending')
-        setOrders(data)
+        const [ordersData, summaryData] = await Promise.all([
+          getOrdersWithProducts(showCompleted ? 'completed' : 'pending'),
+          getWeeklyOrderSummary()
+        ])
+        setOrders(ordersData)
+        setWeeklySummary(summaryData)
       } catch (err) {
-        console.error('Error loading orders:', err)
-        setError('Error al cargar los pedidos')
+        console.error('Error loading data:', err)
+        setError('Error al cargar los datos')
       } finally {
         setIsLoading(false)
       }
     }
 
-    loadOrders()
+    loadData()
   }, [showCompleted])
 
   const handleEditSuccess = async () => {
@@ -41,8 +46,12 @@ export default function OrdersList() {
   const handleCompleteOrder = async (orderId: number) => {
     try {
       await updateOrderStatus(orderId, 'completed')
-      const data = await getOrdersWithProducts(showCompleted ? 'completed' : 'pending')
-      setOrders(data)
+      const [ordersData, summaryData] = await Promise.all([
+        getOrdersWithProducts(showCompleted ? 'completed' : 'pending'),
+        getWeeklyOrderSummary()
+      ])
+      setOrders(ordersData)
+      setWeeklySummary(summaryData)
     } catch (err) {
       console.error('Error completing order:', err)
       setError('Error al completar el pedido')
@@ -52,8 +61,12 @@ export default function OrdersList() {
   const handleMarkAsPending = async (orderId: number) => {
     try {
       await updateOrderStatus(orderId, 'pending')
-      const data = await getOrdersWithProducts(showCompleted ? 'completed' : 'pending')
-      setOrders(data)
+      const [ordersData, summaryData] = await Promise.all([
+        getOrdersWithProducts(showCompleted ? 'completed' : 'pending'),
+        getWeeklyOrderSummary()
+      ])
+      setOrders(ordersData)
+      setWeeklySummary(summaryData)
     } catch (err) {
       console.error('Error marking order as pending:', err)
       setError('Error al marcar el pedido como pendiente')
@@ -102,6 +115,22 @@ export default function OrdersList() {
 
   return (
     <>
+      {!showCompleted && weeklySummary.length > 0 && (
+        <div className="mb-8 p-4 bg-white rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Esta semana debes cocinar:
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {weeklySummary.map((item) => (
+              <div key={item.product_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">{item.description}</span>
+                <span className="text-lg font-semibold text-gray-900">x{item.total_quantity}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-end mb-4">
         <button
           onClick={() => setShowCompleted(!showCompleted)}
@@ -181,7 +210,7 @@ export default function OrdersList() {
           </div>
         ))}
       </div>
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-center mt-8 mb-8">
         <Link
           to="/"
           className="px-6 py-3 bg-green-400 text-gray-800 font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-green-500 transition-all duration-300 transform hover:-translate-y-1 text-center"

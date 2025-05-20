@@ -43,7 +43,7 @@ export default function ProductsTable() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full mb-8">
       <table className="w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>

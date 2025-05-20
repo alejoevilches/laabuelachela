@@ -60,6 +60,12 @@ export interface OrderWithProducts extends Order {
   }[];
 }
 
+export interface WeeklyOrderSummary {
+  product_id: number;
+  description: string;
+  total_quantity: number;
+}
+
 export async function createOrder(
   customerName: string,
   customerPhone: string,
@@ -363,4 +369,73 @@ export async function updateOrderStatus(orderId: number, newStatus: OrderStatus)
   }
 
   return { error: null }
+}
+
+export async function getWeeklyOrderSummary(): Promise<WeeklyOrderSummary[]> {
+  try {
+    // Obtener la fecha de inicio de la semana (lunes)
+    const now = new Date()
+    const startOfWeek = new Date(now)
+    startOfWeek.setDate(now.getDate() - now.getDay() + 1) // Lunes
+    startOfWeek.setHours(0, 0, 0, 0)
+
+    // Obtener todos los pedidos pendientes de esta semana
+    const { data: orders, error: ordersError } = await supabase
+      .from('orders')
+      .select('*')
+      .gte('date', startOfWeek.toISOString().split('T')[0])
+      .eq('status', 'pending')
+
+    if (ordersError) throw ordersError
+
+    // Obtener los productos de cada pedido
+    const orderProducts = await Promise.all(
+      orders.map(async (order) => {
+        const { data: products, error: productsError } = await supabase
+          .from('product_orders')
+          .select('product, quantity')
+          .eq('order_id', order.id)
+
+        if (productsError) throw productsError
+        return products
+      })
+    )
+
+    // Obtener los detalles de los productos
+    const productDetails = new Map<number, string>()
+    const productQuantities = new Map<number, number>()
+
+    for (const products of orderProducts) {
+      for (const product of products) {
+        // Obtener el nombre del producto si no lo tenemos
+        if (!productDetails.has(product.product)) {
+          const { data: productData, error: productError } = await supabase
+            .from('products')
+            .select('description')
+            .eq('id', product.product)
+            .single()
+
+          if (productError) throw productError
+          productDetails.set(product.product, productData.description)
+        }
+
+        // Sumar la cantidad
+        const currentQuantity = productQuantities.get(product.product) || 0
+        productQuantities.set(product.product, currentQuantity + product.quantity)
+      }
+    }
+
+    // Convertir el mapa a un array de resúmenes
+    const summary: WeeklyOrderSummary[] = Array.from(productQuantities.entries()).map(([product_id, total_quantity]) => ({
+      product_id,
+      description: productDetails.get(product_id) || '',
+      total_quantity
+    }))
+
+    // Ordenar por cantidad total de mayor a menor
+    return summary.sort((a, b) => b.total_quantity - a.total_quantity)
+  } catch (error) {
+    console.error('Error getting weekly order summary:', error)
+    throw error
+  }
 } 

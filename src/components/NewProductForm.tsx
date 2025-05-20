@@ -32,7 +32,7 @@ export function NewProductForm({ onSubmit }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 mb-8">
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700">
           Nombre del producto
