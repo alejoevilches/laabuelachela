@@ -184,12 +184,55 @@ export async function getAllProducts() {
 }
 
 export async function toggleProductStatus(id: number, currentStatus: boolean) {
-  const { error } = await supabase
-    .from('products')
-    .update({ active: !currentStatus })
-    .eq('id', id)
+  try {
+    // Obtener el producto actual
+    const { data: product, error: fetchError } = await supabase
+      .from('products')
+      .select('description')
+      .eq('id', id)
+      .single()
 
-  if (error) throw error
+    if (fetchError) throw fetchError
+
+    // Determinar si es un producto normal o integral
+    const isIntegral = product.description.startsWith('[INTEGRAL]')
+    const baseDescription = isIntegral 
+      ? product.description.replace('[INTEGRAL] ', '')
+      : product.description
+
+    // Encontrar el producto relacionado
+    const { data: relatedProduct, error: relatedError } = await supabase
+      .from('products')
+      .select('id')
+      .eq('description', isIntegral ? baseDescription : `[INTEGRAL] ${baseDescription}`)
+      .single()
+
+    if (relatedError && relatedError.code !== 'PGRST116') { // PGRST116 es el código para "no se encontró"
+      throw relatedError
+    }
+
+    // Actualizar ambos productos
+    const updates = [
+      supabase
+        .from('products')
+        .update({ active: !currentStatus })
+        .eq('id', id)
+    ]
+
+    if (relatedProduct) {
+      updates.push(
+        supabase
+          .from('products')
+          .update({ active: !currentStatus })
+          .eq('id', relatedProduct.id)
+      )
+    }
+
+    await Promise.all(updates)
+  } catch (error) {
+    console.error('Error toggling product status:', error)
+    throw error
+  }
 }
 
 export async function checkAndSetupProductsTable() {

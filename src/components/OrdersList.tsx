@@ -95,7 +95,7 @@ export default function OrdersList() {
         <div className="text-center text-gray-600 py-8">
           No hay pedidos {showCompleted ? 'completados' : 'pendientes'} para mostrar
         </div>
-        <div className="flex justify-center gap-4 mt-8">
+        <div className="flex justify-center gap-4 mt-8 mb-8">
           <button
             onClick={() => setShowCompleted(!showCompleted)}
             className="px-6 py-3 bg-blue-400 text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-blue-500 transition-all duration-300 transform hover:-translate-y-1"
@@ -130,15 +130,6 @@ export default function OrdersList() {
           </div>
         </div>
       )}
-
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowCompleted(!showCompleted)}
-          className="px-6 py-3 bg-blue-400 text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-blue-500 transition-all duration-300 transform hover:-translate-y-1"
-        >
-          {showCompleted ? 'Ver pedidos pendientes' : 'Ver pedidos completados'}
-        </button>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {orders.map((order) => (
@@ -210,7 +201,13 @@ export default function OrdersList() {
           </div>
         ))}
       </div>
-      <div className="flex justify-center mt-8 mb-8">
+      <div className="flex justify-center gap-4 mt-8 mb-8">
+        <button
+          onClick={() => setShowCompleted(!showCompleted)}
+          className="px-6 py-3 bg-blue-400 text-white font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-blue-500 transition-all duration-300 transform hover:-translate-y-1"
+        >
+          {showCompleted ? 'Ver pedidos pendientes' : 'Ver pedidos completados'}
+        </button>
         <Link
           to="/"
           className="px-6 py-3 bg-green-400 text-gray-800 font-bold rounded-lg shadow-lg hover:shadow-xl hover:bg-green-500 transition-all duration-300 transform hover:-translate-y-1 text-center"
