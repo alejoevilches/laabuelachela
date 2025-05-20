@@ -66,23 +66,40 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (selectedProducts.length === 0) {
-      setError('Debes seleccionar al menos un producto')
-      return
-    }
+    setError(null)
 
+    // Validar nombre del cliente
     if (!client.trim()) {
-      setError('Debes ingresar el nombre del cliente')
+      setError('Por favor, ingresa el nombre del cliente')
       return
     }
 
-    if (!amount.trim() || isNaN(Number(amount)) || Number(amount) <= 0) {
-      setError('Debes ingresar un precio válido')
+    // Validar que haya al menos un producto seleccionado
+    if (selectedProducts.length === 0) {
+      setError('Por favor, selecciona al menos un producto')
+      return
+    }
+
+    // Validar que todos los productos seleccionados tengan cantidad mayor a 0
+    const hasInvalidQuantity = selectedProducts.some(p => p.quantity <= 0)
+    if (hasInvalidQuantity) {
+      setError('Todos los productos seleccionados deben tener una cantidad mayor a 0')
+      return
+    }
+
+    // Validar el precio total
+    if (!amount.trim()) {
+      setError('Por favor, ingresa el precio total')
+      return
+    }
+
+    const amountNumber = Number(amount)
+    if (isNaN(amountNumber) || amountNumber <= 0) {
+      setError('El precio total debe ser un número mayor a 0')
       return
     }
 
     setIsLoading(true)
-    setError(null)
 
     try {
       if (orderToEdit) {
@@ -91,7 +108,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
           orderToEdit.id,
           client,
           '123456789', // Número de teléfono por defecto
-          Number(amount),
+          amountNumber,
           selectedProducts.map(p => ({
             productId: p.product_id,
             quantity: p.quantity
@@ -107,7 +124,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
         const { error } = await createOrder(
           client,
           '123456789', // Número de teléfono por defecto
-          Number(amount),
+          amountNumber,
           selectedProducts.map(p => ({
             productId: p.product_id,
             quantity: p.quantity
@@ -145,7 +162,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="client" className="block text-sm font-medium text-gray-700">
-          Cliente
+          Cliente *
         </label>
         <input
           type="text"
@@ -154,11 +171,12 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
           onChange={(e) => setClient(e.target.value)}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
           required
+          placeholder="Ingresa el nombre del cliente"
         />
       </div>
 
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Productos</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">Productos *</h3>
         <div className="max-h-[300px] overflow-y-auto border rounded-md">
           <div className="space-y-2 p-2">
             {products.map((product) => (
@@ -187,11 +205,14 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
             ))}
           </div>
         </div>
+        {selectedProducts.length === 0 && (
+          <p className="mt-1 text-sm text-red-600">Selecciona al menos un producto</p>
+        )}
       </div>
 
       <div>
         <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
-          Precio Total
+          Precio Total *
         </label>
         <div className="mt-1 relative rounded-md shadow-sm">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -206,11 +227,12 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
             min="0"
             step="0.01"
             required
+            placeholder="0.00"
           />
         </div>
       </div>
 
-      <div className="flex justify-end space-x-3 pt-4 border-t">
+      <div className="flex justify-end space-x-3 pt-4">
         <button
           type="button"
           onClick={onClose}
