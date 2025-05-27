@@ -1,76 +1,59 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getOrdersWithProducts, updateOrderStatus, getWeeklyOrderSummary, type OrderWithProducts, type WeeklyOrderSummary } from '../lib/supabase'
+import { updateOrderStatus, type OrderWithProducts } from '../lib/supabase'
 import { Modal } from './Modal'
 import NewOrderForm from './NewOrderForm'
 import { generateOrderPDF } from '../utils/generateOrderPDF'
+import Loader from './Loader'
+import { useOrdersStore } from '../store/ordersStore'
 
 export default function OrdersList() {
-  const [orders, setOrders] = useState<OrderWithProducts[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    pendingOrders,
+    completedOrders,
+    weeklySummary,
+    isLoading,
+    error,
+    showCompleted,
+    setShowCompleted,
+    fetchOrders
+  } = useOrdersStore()
+
+  const orders = showCompleted ? completedOrders : pendingOrders
+
+  const [isUpdating, setIsUpdating] = useState(false)
   const [editingOrder, setEditingOrder] = useState<OrderWithProducts | null>(null)
-  const [showCompleted, setShowCompleted] = useState(false)
-  const [weeklySummary, setWeeklySummary] = useState<WeeklyOrderSummary[]>([])
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [ordersData, summaryData] = await Promise.all([
-          getOrdersWithProducts(showCompleted ? 'completed' : 'pending'),
-          getWeeklyOrderSummary()
-        ])
-        setOrders(ordersData)
-        setWeeklySummary(summaryData)
-      } catch (err) {
-        console.error('Error loading data:', err)
-        setError('Error al cargar los datos')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadData()
-  }, [showCompleted])
+    fetchOrders()
+  }, [fetchOrders])
 
   const handleEditSuccess = async () => {
     setEditingOrder(null)
-    try {
-      const data = await getOrdersWithProducts(showCompleted ? 'completed' : 'pending')
-      setOrders(data)
-    } catch (err) {
-      console.error('Error reloading orders:', err)
-      setError('Error al recargar los pedidos')
-    }
+    await fetchOrders(true)
   }
 
   const handleCompleteOrder = async (orderId: number) => {
+    setIsUpdating(true)
     try {
       await updateOrderStatus(orderId, 'completed')
-      const [ordersData, summaryData] = await Promise.all([
-        getOrdersWithProducts(showCompleted ? 'completed' : 'pending'),
-        getWeeklyOrderSummary()
-      ])
-      setOrders(ordersData)
-      setWeeklySummary(summaryData)
+      await fetchOrders(true)
     } catch (err) {
       console.error('Error completing order:', err)
-      setError('Error al completar el pedido')
+    } finally {
+      setIsUpdating(false)
     }
   }
 
   const handleMarkAsPending = async (orderId: number) => {
+    setIsUpdating(true)
     try {
       await updateOrderStatus(orderId, 'pending')
-      const [ordersData, summaryData] = await Promise.all([
-        getOrdersWithProducts(showCompleted ? 'completed' : 'pending'),
-        getWeeklyOrderSummary()
-      ])
-      setOrders(ordersData)
-      setWeeklySummary(summaryData)
+      await fetchOrders(true)
     } catch (err) {
       console.error('Error marking order as pending:', err)
-      setError('Error al marcar el pedido como pendiente')
+    } finally {
+      setIsUpdating(false)
     }
   }
 
@@ -120,6 +103,7 @@ export default function OrdersList() {
 
   return (
     <>
+      <Loader isVisible={isUpdating} />
       {!showCompleted && weeklySummary.length > 0 && (
         <div className="mb-8 p-4 bg-white rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">

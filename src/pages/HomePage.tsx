@@ -4,13 +4,16 @@ import { Modal } from '../components/Modal'
 import NewOrderForm from '../components/NewOrderForm'
 import { NewProductForm } from '../components/NewProductForm'
 import type { ProductFormData } from '../components/NewProductForm'
+import { useOrdersStore } from '../store/ordersStore'
 
 export default function HomePage() {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
   const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const { fetchOrders } = useOrdersStore()
 
-  const handleNewOrder = () => {
+  const handleNewOrder = async () => {
     setIsOrderModalOpen(false)
+    await fetchOrders(true)
   }
 
   const handleNewProduct = (data: ProductFormData) => {

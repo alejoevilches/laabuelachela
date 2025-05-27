@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { getAllProducts, createOrder, updateOrder, type Product } from '../lib/supabase'
+import { useOrdersStore } from '../store/ordersStore'
 
 interface SelectedProduct {
   product_id: number
@@ -14,7 +15,7 @@ interface NewOrderFormProps {
     client: string
     address: string
     amount: number
-    products: { product_id: number; quantity: number }[]
+    products: SelectedProduct[]
   }
 }
 
@@ -27,6 +28,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPickup, setIsPickup] = useState(false)
+  const { fetchOrders } = useOrdersStore()
 
   useEffect(() => {
     async function loadProducts() {
@@ -150,6 +152,7 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
         }
       }
 
+      await fetchOrders()
       onSuccess()
     } catch (err) {
       console.error('Error creating/updating order:', err)
