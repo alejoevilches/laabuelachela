@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Modal } from '../components/Modal'
 import NewOrderForm from '../components/NewOrderForm'
 import { NewProductForm } from '../components/NewProductForm'
-import type { ProductFormData } from '../components/NewProductForm'
 import { useOrdersStore } from '../store/ordersStore'
 
 export default function HomePage() {
@@ -16,8 +15,7 @@ export default function HomePage() {
     await fetchOrders(true)
   }
 
-  const handleNewProduct = (data: ProductFormData) => {
-    console.log('New product data:', data)
+  const handleNewProduct = () => {
     setIsProductModalOpen(false)
   }
 

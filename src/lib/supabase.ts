@@ -18,7 +18,7 @@ const formattedUrl = supabaseUrl.startsWith('http') ? supabaseUrl : `https://${s
 try {
   // Validar la URL
   new URL(formattedUrl)
-} catch (error) {
+} catch {
   console.error('Invalid Supabase URL:', formattedUrl)
   throw new Error('Invalid Supabase URL format')
 }
@@ -69,19 +69,10 @@ export interface WeeklyOrderSummary {
 
 export async function createOrder(
   customerName: string,
-  customerPhone: string,
   address: string,
   amount: number,
   products: { productId: number; quantity: number }[]
 ) {
-  console.log('Creating order with data:', {
-    customerName,
-    customerPhone,
-    address,
-    amount,
-    products
-  })
-
   // Obtener la fecha y hora actual
   const now = new Date()
   const date = now.toISOString().split('T')[0] // YYYY-MM-DD
@@ -108,16 +99,12 @@ export async function createOrder(
     throw orderError
   }
 
-  console.log('Order created successfully:', order)
-
   // Insertar los productos en la tabla product_orders
   const orderProducts = products.map(p => ({
     order_id: order.id,
     product: p.productId,
     quantity: p.quantity
   }))
-
-  console.log('Inserting order products:', orderProducts)
 
   const { error: productsError } = await supabase
     .from('product_orders')
@@ -128,7 +115,6 @@ export async function createOrder(
     throw productsError
   }
 
-  console.log('Order products inserted successfully')
   return { data: order, error: null }
 }
 
@@ -171,7 +157,6 @@ export async function createProduct(description: string) {
 }
 
 export async function getAllProducts() {
-  console.log('Fetching all products from Supabase...')
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -183,7 +168,6 @@ export async function getAllProducts() {
     throw error
   }
 
-  console.log('Raw products data:', JSON.stringify(data, null, 2))
   return data || []
 }
 
@@ -346,20 +330,10 @@ export async function getOrdersWithProducts(status?: OrderStatus) {
 export async function updateOrder(
   orderId: number,
   customerName: string,
-  customerPhone: string,
   address: string,
   amount: number,
   products: { productId: number; quantity: number }[]
 ) {
-  console.log('Updating order with data:', {
-    orderId,
-    customerName,
-    customerPhone,
-    address,
-    amount,
-    products
-  })
-
   // Actualizar la orden básica
   const { error: orderError } = await supabase
     .from('orders')
@@ -392,8 +366,6 @@ export async function updateOrder(
     product: p.productId,
     quantity: p.quantity
   }))
-
-  console.log('Inserting updated order products:', orderProducts)
 
   const { error: productsError } = await supabase
     .from('product_orders')

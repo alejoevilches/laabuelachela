@@ -120,7 +120,6 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
         const { error } = await updateOrder(
           orderToEdit.id,
           client,
-          '123456789', // Número de teléfono por defecto
           isPickup ? 'Retira' : address,
           amountNumber,
           selectedProducts.map(p => ({
@@ -137,7 +136,6 @@ export default function NewOrderForm({ onClose, onSuccess, orderToEdit }: NewOrd
         // Crear nuevo pedido
         const { error } = await createOrder(
           client,
-          '123456789', // Número de teléfono por defecto
           isPickup ? 'Retira' : address,
           amountNumber,
           selectedProducts.map(p => ({

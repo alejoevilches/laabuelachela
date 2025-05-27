@@ -10,7 +10,6 @@ export default function ProductsTable() {
     const fetchProducts = async () => {
       try {
         const data = await getAllProducts()
-        console.log('Data received in component:', JSON.stringify(data, null, 2))
         setProducts(data)
       } catch (err) {
         console.error('Error in component:', err)
